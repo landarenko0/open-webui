@@ -11,6 +11,7 @@ from open_webui.utils.tools import (
     get_tool_server_data,
     get_tool_servers_data,
     get_tool_server_url,
+    find_prompt_suggestion,
 )
 
 
@@ -303,6 +304,47 @@ async def set_default_suggestions(
     data = form_data.model_dump()
     request.app.state.config.DEFAULT_PROMPT_SUGGESTIONS = data["suggestions"]
     return request.app.state.config.DEFAULT_PROMPT_SUGGESTIONS
+
+class UsedPromptSuggestion(BaseModel):
+    prompt_suggestion: PromptSuggestion
+    count_of_uses: int
+
+# Метод для инкремента счетчика предложенного промпта
+@router.post("/increment_used_suggestion", response_model=UsedPromptSuggestion)
+async def increment_count_of_uses_of_prompt_suggestion(
+    request: Request,
+    prompt_suggestion: PromptSuggestion,
+    user=Depends(get_verified_user)
+):
+    data = prompt_suggestion.model_dump()
+    used_prompt_suggestions = request.app.state.config.USED_PROMPT_SUGGESTIONS
+    index_of_prompt = find_prompt_suggestion(used_prompt_suggestions, data)
+
+    if index_of_prompt == -1:
+        used_prompt_suggestions.append(
+            {
+                "prompt_suggestion": {
+                    "title": data["title"],
+                    "content": data["content"]
+                },
+                "count_of_uses": 1
+            }
+        )
+    else:
+        count_of_uses = used_prompt_suggestions[index_of_prompt]["count_of_uses"]
+        used_prompt_suggestions[index_of_prompt]["count_of_uses"] = count_of_uses + 1
+
+    request.app.state.config.USED_PROMPT_SUGGESTIONS = used_prompt_suggestions
+
+    return request.app.state.config.USED_PROMPT_SUGGESTIONS[index_of_prompt]
+
+# Метод для получения списка использованных предложенных промптов с количеством использования
+@router.get("/used_suggestions", response_model=list[UsedPromptSuggestion])
+async def get_used_prompt_suggestions(
+    request: Request,
+    user=Depends(get_verified_user)
+):
+    return sorted(request.app.state.config.USED_PROMPT_SUGGESTIONS, key=lambda prompt: prompt["count_of_uses"])
 
 
 ############################

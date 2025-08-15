@@ -1101,6 +1101,18 @@ DEFAULT_PROMPT_SUGGESTIONS = PersistentConfig(
     default_prompt_suggestions,
 )
 
+try:
+    used_prompt_suggestions = json.loads(os.environ.get("USED_PROMPT_SUGGESTIONS", "[]"))
+except Exception as e:
+    log.exception(f"Error loading USED_PROMPT_SUGGESTIONS: {e}")
+    used_prompt_suggestions = []
+
+USED_PROMPT_SUGGESTIONS = PersistentConfig(
+    "USED_PROMPT_SUGGESTIONS",
+    "ui.used_prompt_suggestions",
+    used_prompt_suggestions
+)
+
 MODEL_ORDER_LIST = PersistentConfig(
     "MODEL_ORDER_LIST",
     "ui.model_order_list",

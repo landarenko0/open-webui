@@ -655,3 +655,11 @@ def get_tool_server_url(url: Optional[str], path: str) -> str:
         # Ensure the path starts with a slash
         path = f"/{path}"
     return f"{url}{path}"
+
+# Метод для поиска использованного промпта в списке. Возвращает индекс найденного элемента, иначе -1
+def find_prompt_suggestion(prompts: list[dict], prompt_suggestion: dict) -> int:
+    for i in range(0, len(prompts)):
+        if (prompts[i]["prompt_suggestion"] == prompt_suggestion):
+            return i
+
+    return -1
